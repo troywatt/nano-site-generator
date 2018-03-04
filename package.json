@@ -1,0 +1,23 @@
+{
+  "name": "@ultradent/nano-site-generator",
+  "author": "Ultradent Products, Inc",
+  "version": "0.0.1",
+  "description": "Simple static site generator using ejs templates",
+  "main": "index.js",
+  "files": [
+    "/"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "chalk": "^2.3.2",
+    "ejs": "^2.5.7",
+    "ejs-blocks": "^0.1.4",
+    "fs-extra": "^5.0.0",
+    "glob": "^7.1.2",
+    "path": "^0.12.7",
+    "util": "^0.10.3"
+  },
+  "license": "ISC"
+}
