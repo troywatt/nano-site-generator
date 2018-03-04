@@ -3,7 +3,7 @@
   "author": "Ultradent Products, Inc",
   "version": "0.0.1",
   "description": "Simple static site generator using ejs templates",
-  "main": "index.js",
+  "main": "src/main.js",
   "files": [
     "/"
   ],
