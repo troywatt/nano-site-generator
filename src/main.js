@@ -27,12 +27,14 @@ module.exports = ( userConfig = {} ) => {
     // read page templates
     return globP( '**/*.{ejs,html}', {cwd: `${paths.src}/pages`} )
         .then( files => {
+            const compileP = [];
+
             files.forEach( file => {
                 const fileData = path.parse( file );
                 const destPath = path.join( paths.dist, fileData.dir );
 
                 // create destination directory
-                fse.mkdirs( destPath )
+                compileP.push( fse.mkdirs( destPath )
                     // render page
                     .then( () => renderFileP( `${paths.src}/pages/${file}`, options ) )
                     .then( content => {
@@ -40,8 +42,11 @@ module.exports = ( userConfig = {} ) => {
                         console.log( `compile`, chalk.green( `-> ${fileData.dir}/${fileData.name}` ) );
                         fse.writeFile( `${paths.dist}/${fileData.dir}/${fileData.name}.html`, content );
                     } )
-                    .catch( err => console.error( chalk.red( err ) ) );
+                    .catch( err => console.error( chalk.red( err ) ) )
+                );
             } );
+
+            return Promise.all( compileP );
         } )
         .catch( err => console.error( chalk.red( err ) ) );
 };
