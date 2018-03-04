@@ -11,7 +11,9 @@ const config = require( '../nanosite.config' );
 // todo -> make configurable
 const {paths} = config;
 
-module.exports = function () {
+module.exports = ( userConfig = {} ) => {
+    const options = assign( {}, config, userConfig );
+
     console.log( chalk.blue( 'Building static site...' ) );
 
     // clear destination folder
@@ -32,7 +34,7 @@ module.exports = function () {
                 // create destination directory
                 fse.mkdirs( destPath )
                     // render page
-                    .then( () => renderFileP( `${paths.src}/pages/${file}`, assign( {}, config ) ) )
+                    .then( () => renderFileP( `${paths.src}/pages/${file}`, options ) )
                     .then( content => {
                         // save the html file
                         console.log( `compile`, chalk.green( `-> ${fileData.dir}/${fileData.name}` ) );
