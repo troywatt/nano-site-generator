@@ -11,37 +11,36 @@ const config = require( '../nanosite.config' );
 
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
-    const {paths: {src, dist, views, assets}} = options;
+    const {paths: {distDir, viewsDir, assetsDir, assetsDistDir}} = options;
 
     console.log( chalk.blue( 'Building static site...' ) );
-    console.log( 'Current dir:', chalk.blue( path.join( src, views ) ) );
+    console.log( 'Current dir:', chalk.blue( viewsDir ) );
 
     // clear destination folder
     console.log( chalk.green( '-> Cleaning destination folder' ) );
-    fse.emptyDirSync( dist );
+    fse.emptyDirSync( distDir );
 
     // copy assets folder
-    const assetDir = path.join( src, assets );
-    if ( pathExists.sync( assetDir ) ) {
+    if ( pathExists.sync( assetsDir ) ) {
         console.log( chalk.green( '-> Copying assets' ) );
-        fse.copy( assetDir, path.join( dist, assets ) );
+        fse.copy( assetsDir, assetsDistDir );
     }
 
     // read page templates
-    return globP( '**/*.{ejs,html}', {cwd: path.join( src, views )} )
+    return globP( '**/*.{ejs,html}', {cwd: viewsDir} )
         .then( files => {
             const compileP = [];
 
             files.forEach( file => {
                 const fileData = path.parse( file );
-                const destPath = path.join( dist, fileData.dir );
+                const destPath = path.join( distDir, fileData.dir );
                 const filePath = path.join( destPath, `${fileData.name}.html` );
 
                 // create destination directory
                 compileP.push(
                     fse.mkdirs( destPath )
                         // render page
-                        .then( () => renderFileP( path.join( src, views, file ), options ) )
+                        .then( () => renderFileP( path.join( viewsDir, file ), options ) )
                         .then( content => {
                             // save the html file
                             // todo -> write to temp dir until entire process succeeds to prevent destructive errors

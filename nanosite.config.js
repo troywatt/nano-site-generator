@@ -3,9 +3,10 @@ module.exports = {
         'view engine': 'ejs'
     },
     paths: {
-        src: 'src',
-        dist: 'public',
-        views: 'pages',
-        assets: 'assets'
+        srcDir: 'src',
+        distDir: 'public',
+        viewsDir: 'src/pages',
+        assetsDir: 'src/assets',
+        assetsDistDir: 'public/assets'
     }
 };
