@@ -6,7 +6,12 @@ var nanogen = require( './main' );
 var program = require( 'commander' );
 var pathExists = require( 'path-exists' );
 
-console.log( 'Nanogen [LOGO]' );
+console.log( chalk.magenta( `
+ ___  ___  ___  ___  ___  ___  ___
+|   )|   )|   )|   )|   )|___)|   )
+|  / |__/||  / |__/ |__/ |__  |  /
+                    __/
+` ) );
 
 let package = JSON.parse( fs.readFileSync( path.join( __dirname, '../package.json' ), 'utf8' ) );
 let config = {};

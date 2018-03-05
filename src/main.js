@@ -1,13 +1,13 @@
 const fse = require( 'fs-extra' );
 const path = require( 'path' );
 const chalk = require( 'chalk' );
-const assign = Object.assign;
 const {promisify} = require( 'util' );
 const globP = promisify( require( 'glob' ) );
 const ejs = require( 'ejs-blocks' );
 const renderFileP = promisify( ejs );
-const config = require( '../nanosite.config' );
 const merge = require( 'deepmerge' );
+const pathExists = require( 'path-exists' );
+const config = require( '../nanosite.config' );
 
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
@@ -21,8 +21,11 @@ module.exports = ( userConfig = {} ) => {
     fse.emptyDirSync( dist );
 
     // copy assets folder
-    console.log( chalk.green( '-> Copying assets' ) );
-    fse.copy( path.join( src, assets ), path.join( dist, assets ) );
+    var assetDir = path.join( src, assets );
+    if ( pathExists.sync( assetDir ) ) {
+        console.log( chalk.green( '-> Copying assets' ) );
+        fse.copy( assetDir, path.join( dist, assets ) );
+    }
 
     // read page templates
     return globP( '**/*.{ejs,html}', {cwd: path.join( src, views )} )
