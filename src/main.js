@@ -39,8 +39,10 @@ module.exports = ( userConfig = {} ) => {
                     .then( () => renderFileP( `${paths.src}/pages/${file}`, options ) )
                     .then( content => {
                         // save the html file
-                        console.log( `compile`, chalk.green( `-> ${fileData.dir}/${fileData.name}` ) );
-                        fse.writeFile( `${paths.dist}/${fileData.dir}/${fileData.name}.html`, content );
+                        const filePath = `${paths.dist}/${fileData.dir}/${fileData.name}.html`;
+
+                        console.log( `write file:`, chalk.green( `-> ${filePath}` ) );
+                        fse.writeFile( filePath, content );
                     } )
                     .catch( err => {
                         console.log( `!Failed to write file`,
