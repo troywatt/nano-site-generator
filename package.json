@@ -21,6 +21,7 @@
     "fs-extra": "^5.0.0",
     "glob": "^7.1.2",
     "path": "^0.12.7",
+    "path-exists": "^3.0.0",
     "util": "^0.10.3"
   },
   "license": "ISC"
