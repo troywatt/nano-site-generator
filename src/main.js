@@ -8,7 +8,6 @@ const ejs = require( 'ejs-blocks' );
 const renderFileP = promisify( ejs );
 const config = require( '../nanosite.config' );
 
-// todo -> make configurable
 const {paths} = config;
 
 module.exports = ( userConfig = {} ) => {
@@ -22,6 +21,7 @@ module.exports = ( userConfig = {} ) => {
 
     // copy assets folder
     console.log( '-> Copying assets' );
+    // todo -> make assets/ configurable
     fse.copy( `${paths.src}/assets`, `${paths.dist}/assets` );
 
     // read page templates
@@ -42,7 +42,11 @@ module.exports = ( userConfig = {} ) => {
                         console.log( `compile`, chalk.green( `-> ${fileData.dir}/${fileData.name}` ) );
                         fse.writeFile( `${paths.dist}/${fileData.dir}/${fileData.name}.html`, content );
                     } )
-                    .catch( err => console.error( chalk.red( err ) ) )
+                    .catch( err => {
+                        console.log( `!Failed to write file`,
+                            chalk.red( `-> ${paths.dist}/${fileData.dir}/${fileData.name}.html` ) );
+                        console.error( chalk.red( err ) );
+                    } )
                 );
             } );
 
