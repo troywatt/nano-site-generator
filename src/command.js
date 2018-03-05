@@ -9,7 +9,7 @@ var pathExists = require( 'path-exists' );
 console.log( 'Nanogen [LOGO]' );
 
 let package = JSON.parse( fs.readFileSync( path.join( __dirname, '../package.json' ), 'utf8' ) );
-let config = null;
+let config = {};
 
 program
     .version( package.version )
@@ -31,7 +31,7 @@ if ( program.config ) {
 }
 
 nanogen( config )
-    .then( () => {
+    .then( files => {
         console.log( chalk.green( 'Done!' ) );
     } )
     .catch( err => {

@@ -9,20 +9,20 @@ const renderFileP = promisify( ejs );
 const config = require( '../nanosite.config' );
 const merge = require( 'deepmerge' );
 
-const {paths} = config;
-
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
-    const {src, dist, views, assets} = paths;
+    const {paths: {src, dist, views, assets}} = options;
+    // const {src, dist, views, assets} = paths;
 
     console.log( chalk.blue( 'Building static site...' ) );
+    console.log( 'Current dir:', chalk.blue( path.join( src, views ) ) );
 
     // clear destination folder
-    console.log( '-> Cleaning destination folder' );
-    fse.emptyDirSync( paths.dist );
+    console.log( chalk.green( '-> Cleaning destination folder' ) );
+    fse.emptyDirSync( dist );
 
     // copy assets folder
-    console.log( '-> Copying assets' );
+    console.log( chalk.green( '-> Copying assets' ) );
     fse.copy( path.join( src, assets ), path.join( dist, assets ) );
 
     // read page templates
@@ -36,25 +36,29 @@ module.exports = ( userConfig = {} ) => {
                 const filePath = path.join( destPath, `${fileData.name}.html` );
 
                 // create destination directory
-                compileP.push( fse.mkdirs( destPath )
-                    // render page
-                    .then( () => renderFileP( path.join( src, views, file ), options ) )
-                    .then( content => {
-                        // save the html file
-                        // todo -> write to temp dir until entire process succeeds to prevent destructive errors
-                        console.log( `write file:`, chalk.green( `-> ${filePath}` ) );
-                        fse.writeFile( filePath, content );
-                    } )
-                    .catch( err => {
-                        console.log( `!Failed to write file`, chalk.red( `-> ${filePath}` ) );
-                        console.error( chalk.red( err ) );
-                        console.error( chalk.red( 'Process terminate' ) );
-                        process.exit( 1 );
-                    } )
+                compileP.push(
+                    fse.mkdirs( destPath )
+                        // render page
+                        .then( () => renderFileP( path.join( src, views, file ), options ) )
+                        .then( content => {
+                            // save the html file
+                            // todo -> write to temp dir until entire process succeeds to prevent destructive errors
+                            console.log( `Write:`, chalk.green( `-> ${filePath}` ) );
+                            fse.writeFile( filePath, content );
+                        } )
+                        .catch( err => {
+                            console.log( `!Failed to write file`, chalk.red( `-> ${filePath}` ) );
+                            console.error( chalk.red( err ) );
+                            console.error( chalk.bold.red( '\n\r*** Process terminate ***' ) );
+                            process.exit( 1 );
+                        } )
                 );
             } );
 
-            return Promise.all( compileP );
+            return Promise.all( compileP ).then( files => {
+                console.log( chalk.bold.blue( `Total Files: (${files.length})` ) );
+                return files;
+            } );
         } )
         .catch( err => console.error( chalk.red( err ) ) );
 };
