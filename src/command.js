@@ -33,7 +33,6 @@ if ( program.config ) {
 nanogen( config )
     .then( () => {
         console.log( chalk.green( 'Done!' ) );
-        process.exit( 0 );
     } )
     .catch( err => {
         console.log( chalk.red( err ) );

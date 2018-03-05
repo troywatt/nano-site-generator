@@ -23,7 +23,6 @@ module.exports = ( userConfig = {} ) => {
 
     // copy assets folder
     console.log( '-> Copying assets' );
-    // todo -> make assets/ configurable
     fse.copy( path.join( src, assets ), path.join( dist, assets ) );
 
     // read page templates
