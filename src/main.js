@@ -42,6 +42,7 @@ module.exports = ( userConfig = {} ) => {
                         // save the html file
                         const filePath = `${paths.dist}/${fileData.dir}/${fileData.name}.html`;
 
+                        // todo -> write to temp dir until entire process succeeds to prevent destructive errors
                         console.log( `write file:`, chalk.green( `-> ${filePath}` ) );
                         fse.writeFile( filePath, content );
                     } )
@@ -49,6 +50,8 @@ module.exports = ( userConfig = {} ) => {
                         console.log( `!Failed to write file`,
                             chalk.red( `-> ${paths.dist}/${fileData.dir}/${fileData.name}.html` ) );
                         console.error( chalk.red( err ) );
+                        console.error( chalk.red( 'Process terminate' ) );
+                        process.exit( 1 );
                     } )
                 );
             } );
