@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+var chalk = require( 'chalk' );
 var path = require( 'path' );
 var fs = require( 'fs' );
 var nanogen = require( './main' );
@@ -12,7 +12,6 @@ let package = JSON.parse( fs.readFileSync( path.join( __dirname, '../package.jso
 let config = null;
 
 program
-// todo -> read version from package.json
     .version( package.version )
     .option( '-c, --config <config>', 'Path to JSON file to configure Nanogen build' )
     .parse( process.argv );
@@ -25,8 +24,11 @@ if ( program.config ) {
 }
 
 nanogen( config )
-    .then( () => console.log( 'Done!' ) )
-    .catch( err => {
-        console.log( err );
+    .then( () => {
+        console.log( chalk.green( 'Done!' ) );
         process.exit( 0 );
+    } )
+    .catch( err => {
+        console.log( chalk.red( err ) );
+        process.exit( 1 );
     } );
