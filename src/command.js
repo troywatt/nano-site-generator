@@ -7,11 +7,13 @@ var program = require( 'commander' );
 
 console.log( 'Nanogen [LOGO]' );
 
+let package = JSON.parse( fs.readFileSync( path.join( __dirname, '../package.json' ), 'utf8' ) );
+
 let config = null;
 
 program
 // todo -> read version from package.json
-    .version( '0.0.4' )
+    .version( package.version )
     .option( '-c, --config <config>', 'Path to JSON file to configure Nanogen build' )
     .parse( process.argv );
 
