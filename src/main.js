@@ -12,7 +12,6 @@ const merge = require( 'deepmerge' );
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
     const {paths: {src, dist, views, assets}} = options;
-    // const {src, dist, views, assets} = paths;
 
     console.log( chalk.blue( 'Building static site...' ) );
     console.log( 'Current dir:', chalk.blue( path.join( src, views ) ) );
