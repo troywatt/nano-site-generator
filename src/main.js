@@ -9,6 +9,15 @@ const merge = require( 'deepmerge' );
 const pathExists = require( 'path-exists' );
 const config = require( '../nanosite.config' );
 
+function resetBlocks ( options ) {
+    // reset each view block so values are not compounded across renders
+    if ( options.blocks ) {
+        Object.keys( options.blocks ).forEach( blk => {
+            options.blocks[blk].replace( '' )
+        } );
+    }
+}
+
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
     const {paths: {distDir, viewsDir, assetsDir, assetsDistDir}} = options;
@@ -37,9 +46,11 @@ module.exports = ( userConfig = {} ) => {
                 const filePath = path.join( destPath, `${fileData.name}.html` );
 
                 // create destination directory
+
                 compileP.push(
                     fse.mkdirs( destPath )
                         // render page
+                        .then( () => resetBlocks( options ) )
                         .then( () => renderFileP( path.join( viewsDir, file ), options ) )
                         .then( content => {
                             // save the html file
