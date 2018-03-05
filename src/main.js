@@ -13,6 +13,7 @@ const {paths} = config;
 
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
+    const {src, dist, views, assets} = paths;
 
     console.log( chalk.blue( 'Building static site...' ) );
 
@@ -23,23 +24,24 @@ module.exports = ( userConfig = {} ) => {
     // copy assets folder
     console.log( '-> Copying assets' );
     // todo -> make assets/ configurable
-    fse.copy( `${paths.src}/${paths.assets}`, `${paths.dist}/${paths.assets}` );
+    fse.copy( path.join( src, assets ), path.join( dist, assets ) );
 
     // read page templates
-    return globP( '**/*.{ejs,html}', {cwd: `${paths.src}/${paths.views}`} )
+    return globP( '**/*.{ejs,html}', {cwd: path.join( src, views )} )
         .then( files => {
             const compileP = [];
 
             files.forEach( file => {
                 const fileData = path.parse( file );
-                const destPath = path.join( paths.dist, fileData.dir );
+                const destPath = path.join( dist, fileData.dir );
 
                 // create destination directory
                 compileP.push( fse.mkdirs( destPath )
                     // render page
-                    .then( () => renderFileP( `${paths.src}/${paths.views}/${file}`, options ) )
+                    .then( () => renderFileP( path.join( src, views, file ), options ) )
                     .then( content => {
                         // save the html file
+                        console.log( 'PATH:', path.join( dist, fileData.dir, fileData.name + '.html' ) );
                         const filePath = `${paths.dist}/${fileData.dir}/${fileData.name}.html`;
 
                         // todo -> write to temp dir until entire process succeeds to prevent destructive errors
