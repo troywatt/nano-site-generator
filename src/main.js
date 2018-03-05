@@ -34,6 +34,7 @@ module.exports = ( userConfig = {} ) => {
             files.forEach( file => {
                 const fileData = path.parse( file );
                 const destPath = path.join( dist, fileData.dir );
+                const filePath = path.join( destPath, `${fileData.name}.html` );
 
                 // create destination directory
                 compileP.push( fse.mkdirs( destPath )
@@ -41,16 +42,12 @@ module.exports = ( userConfig = {} ) => {
                     .then( () => renderFileP( path.join( src, views, file ), options ) )
                     .then( content => {
                         // save the html file
-                        console.log( 'PATH:', path.join( dist, fileData.dir, fileData.name + '.html' ) );
-                        const filePath = `${paths.dist}/${fileData.dir}/${fileData.name}.html`;
-
                         // todo -> write to temp dir until entire process succeeds to prevent destructive errors
                         console.log( `write file:`, chalk.green( `-> ${filePath}` ) );
                         fse.writeFile( filePath, content );
                     } )
                     .catch( err => {
-                        console.log( `!Failed to write file`,
-                            chalk.red( `-> ${paths.dist}/${fileData.dir}/${fileData.name}.html` ) );
+                        console.log( `!Failed to write file`, chalk.red( `-> ${filePath}` ) );
                         console.error( chalk.red( err ) );
                         console.error( chalk.red( 'Process terminate' ) );
                         process.exit( 1 );
