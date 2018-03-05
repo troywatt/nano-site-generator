@@ -21,7 +21,7 @@ module.exports = ( userConfig = {} ) => {
     fse.emptyDirSync( dist );
 
     // copy assets folder
-    var assetDir = path.join( src, assets );
+    const assetDir = path.join( src, assets );
     if ( pathExists.sync( assetDir ) ) {
         console.log( chalk.green( '-> Copying assets' ) );
         fse.copy( assetDir, path.join( dist, assets ) );
