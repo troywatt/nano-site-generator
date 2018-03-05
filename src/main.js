@@ -7,11 +7,12 @@ const globP = promisify( require( 'glob' ) );
 const ejs = require( 'ejs-blocks' );
 const renderFileP = promisify( ejs );
 const config = require( '../nanosite.config' );
+const deepmerge = require( 'deepmerge' );
 
 const {paths} = config;
 
 module.exports = ( userConfig = {} ) => {
-    const options = assign( {}, config, userConfig );
+    const options = deepmerge( {}, config, userConfig );
 
     console.log( chalk.blue( 'Building static site...' ) );
 
@@ -25,7 +26,7 @@ module.exports = ( userConfig = {} ) => {
     fse.copy( `${paths.src}/assets`, `${paths.dist}/assets` );
 
     // read page templates
-    return globP( '**/*.{ejs,html}', {cwd: `${paths.src}/pages`} )
+    return globP( '**/*.{ejs,html}', {cwd: `${paths.src}/${paths.views}`} )
         .then( files => {
             const compileP = [];
 
@@ -36,7 +37,7 @@ module.exports = ( userConfig = {} ) => {
                 // create destination directory
                 compileP.push( fse.mkdirs( destPath )
                     // render page
-                    .then( () => renderFileP( `${paths.src}/pages/${file}`, options ) )
+                    .then( () => renderFileP( `${paths.src}/${paths.views}/${file}`, options ) )
                     .then( content => {
                         // save the html file
                         const filePath = `${paths.dist}/${fileData.dir}/${fileData.name}.html`;

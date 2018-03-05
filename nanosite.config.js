@@ -4,6 +4,8 @@ module.exports = {
     },
     paths: {
         src: 'src',
-        dist: 'public'
+        dist: 'public',
+        views: 'pages',
+        assets: 'assets'
     }
 };

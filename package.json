@@ -16,6 +16,7 @@
   "dependencies": {
     "chalk": "^2.3.2",
     "commander": "^2.14.1",
+    "deepmerge": "^2.0.1",
     "ejs": "^2.5.7",
     "ejs-blocks": "^0.1.4",
     "fs-extra": "^5.0.0",
