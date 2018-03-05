@@ -7,12 +7,12 @@ const globP = promisify( require( 'glob' ) );
 const ejs = require( 'ejs-blocks' );
 const renderFileP = promisify( ejs );
 const config = require( '../nanosite.config' );
-const deepmerge = require( 'deepmerge' );
+const merge = require( 'deepmerge' );
 
 const {paths} = config;
 
 module.exports = ( userConfig = {} ) => {
-    const options = deepmerge( {}, config, userConfig );
+    const options = merge( config, userConfig );
 
     console.log( chalk.blue( 'Building static site...' ) );
 
@@ -23,7 +23,7 @@ module.exports = ( userConfig = {} ) => {
     // copy assets folder
     console.log( '-> Copying assets' );
     // todo -> make assets/ configurable
-    fse.copy( `${paths.src}/assets`, `${paths.dist}/assets` );
+    fse.copy( `${paths.src}/${paths.assets}`, `${paths.dist}/${paths.assets}` );
 
     // read page templates
     return globP( '**/*.{ejs,html}', {cwd: `${paths.src}/${paths.views}`} )
