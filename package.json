@@ -21,10 +21,10 @@
     "ejs-blocks": "^0.1.4",
     "fs-extra": "^5.0.0",
     "glob": "^7.1.2",
+    "glob-all": "^3.1.0",
     "path": "^0.12.7",
     "path-exists": "^3.0.0",
-    "purify-css": "^1.2.5",
-    "uncss": "^0.16.1",
+    "purgecss": "^0.20.1",
     "util": "^0.10.3"
   },
   "license": "ISC"

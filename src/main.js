@@ -7,8 +7,7 @@ const ejs = require( 'ejs-blocks' );
 const renderFileP = promisify( ejs );
 const merge = require( 'deepmerge' );
 const pathExists = require( 'path-exists' );
-const uncssP = promisify( require( 'uncss' ) );
-const purifycssP = promisify( require( 'purify-css' ) );
+const Purgecss = require( 'purgecss' );
 
 const config = require( '../nanosite.config' );
 
@@ -23,7 +22,7 @@ function resetBlocks ( options ) {
 
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
-    const {paths: {distDir, viewsDir, assetsDir, assetsDistDir, excludeDirs, excludeInFileName}} = options;
+    const {paths: {distDir, viewsDir, assetsDir, assetsDistDir, excludeDirs, excludeInFilename}} = options;
 
     console.log( chalk.blue( 'Building static site...' ) );
     console.log( 'Current dir:', chalk.blue( viewsDir ) );
@@ -43,7 +42,7 @@ module.exports = ( userConfig = {} ) => {
     // read page templates
     glob = '**';
     glob += excludeDirs.length ? `/!(${excludeDirs.join( '|' )})` : '/**';
-    glob += excludeInFileName.length ? `/!(${excludeInFileName.join( '|' )})` : '/';
+    glob += excludeInFilename.length ? `/!(${excludeInFilename.join( '|' )})` : '/';
     glob += '*.{ejs,html}';
 
     return globP( glob, {cwd: viewsDir} )
@@ -89,66 +88,27 @@ module.exports = ( userConfig = {} ) => {
             } );
         } )
 
-        /* .then( () => {
-             console.log( chalk.blue( 'Running purifycss...' ) );
+        .then( () => {
+            console.log( chalk.blue( 'Running purgecss...' ) );
+            console.log( 'Content path:', chalk.blue( path.join( distDir, '*.html' ) ) );
+            console.log( 'CSS path: ', chalk.blue( path.join( distDir, 'css/*.css' ) ) );
 
-             const content = ['build/!*.html', 'build/js/!*.js'];
-             const css = ['build/css/global.min.css'];
-             const options = {
-                 output: 'build/css/global.pure.css',
-                 minify: true
-                 // rejected: true
-             };
+            return Promise.all( [
+                // content: ['build/*.html', 'build/js/!*.js'],
+                globP( path.join( distDir, '*.html' ) ),
+                globP( path.join( distDir, 'css/*.css' ) )
+            ] ).then( ( [content, css] ) => {
+                const purgecss = new Purgecss( {content, css} );
 
-             return purifycssP( content, css, options ).then( output => {
-                 // console.log( 'result:', result );
-                 console.log( `Write:`, chalk.green( `-> build/css/global.uncss.css\n\r` ) );
-                 fse.writeFile( 'build/css/global.pure.css', output );
-                 return this;
-             } )
+                purgecss.purge().forEach( item => {
+                    console.log( `Write:`, chalk.green( `-> ${item.file}` ) );
+                    fse.writeFile( item.file, item.css );
+                } );
+                return this;
+            } );
 
-         } )*/
+        } )
 
-        /*  .then( () => {
-              console.log( chalk.blue( 'Running UnCSS...' ) );
-              return uncssP( [
-                  // `${distDir}/-home.html`
-                  // `${distDir}/home-intl.html`,
-                  // `${distDir}/!*.html`
-                  `${distDir}/account-order-history-invoice-print.html`,
-                  `${distDir}/checkout-cart.html`,
-                  `${distDir}/registration-login.html`,
-                  `${distDir}/checkout-payment.html`,
-                  `${distDir}/checkout-confirmation.html`,
-                  `${distDir}/products-product-configurator.html`,
-                  `${distDir}/categories-home.html`,
-                  `${distDir}/categories-category.html`
-              ], {
-                  htmlroot: 'build',
-                  // htmlroot: 'build',
-                  // csspath: '/Users/troywatt/Sites/upi/UPI/Ultradent/UPI.Webstore.Frontend/UPI.Webstore.Frontend/build/css/',
-                  stylesheets: [
-                      '/css/global.min.css'
-                      // '/css/products.css'
-                      // 'productConfigurator.css',
-                      // 'lgp-portal.css',
-                      // 'my-account.css',
-                      // 'checkout.css'
-                  ],
-                  ignoreSheets: [/fonts.googleapis/]
-
-              } )
-                  .then( output => {
-                      console.log( `Write:`, chalk.green( `-> build/css/global.uncss.css\n\r` ) );
-                      fse.writeFile( 'build/css/global.min.css', output );
-                  } )
-                  .catch( err => {
-                      console.error( chalk.red( err ) );
-                      console.error( chalk.bold.red( '\n\r*** Process terminate ***\n\r' ) );
-                      process.exit( 1 );
-                  } )
-          } )*/
-
-        .catch( err => console.error( chalk.red( err ) ) );
+        .catch( err => console.error( chalk.red( `[NanogenError] ${err}` ) ) );
 };
 

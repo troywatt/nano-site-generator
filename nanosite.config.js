@@ -7,6 +7,8 @@ module.exports = {
         distDir: 'public',
         viewsDir: 'src/pages',
         assetsDir: 'src/assets',
-        assetsDistDir: 'public/assets'
+        assetsDistDir: 'public/assets',
+        excludeDirs: [],
+        excludeInFilename: []
     }
 };
