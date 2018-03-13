@@ -8,6 +8,7 @@ const renderFileP = promisify( ejs );
 const merge = require( 'deepmerge' );
 const pathExists = require( 'path-exists' );
 const Purgecss = require( 'purgecss' );
+const purgeHtml = require( 'purge-from-html' );
 
 const config = require( '../nanosite.config' );
 
@@ -22,7 +23,10 @@ function resetBlocks ( options ) {
 
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
-    const {paths: {distDir, viewsDir, assetsDir, assetsDistDir, excludeDirs, excludeInFilename}} = options;
+    const {
+        paths: {distDir, viewsDir, assetsDir, assetsDistDir, excludeDirs, excludeInFilename},
+        purgecss: purgecssConfig
+    } = options;
 
     console.log( chalk.blue( 'Building static site...' ) );
     console.log( 'Current dir:', chalk.blue( viewsDir ) );
@@ -89,16 +93,36 @@ module.exports = ( userConfig = {} ) => {
         } )
 
         .then( () => {
+            const {content, css, whitelist, whitelistPatterns} = purgecssConfig;
             console.log( chalk.blue( 'Running purgecss...' ) );
-            console.log( 'Content path:', chalk.blue( path.join( distDir, '*.html' ) ) );
+            console.log( 'Content path:', chalk.blue( path.join( distDir, '**/*.{html,js}' ) ) );
             console.log( 'CSS path: ', chalk.blue( path.join( distDir, 'css/*.css' ) ) );
+            console.log( 'purgecssConfig: ', chalk.blue( JSON.stringify( purgecssConfig ) ) );
 
             return Promise.all( [
-                // content: ['build/*.html', 'build/js/!*.js'],
-                globP( path.join( distDir, '*.html' ) ),
-                globP( path.join( distDir, 'css/*.css' ) )
+                globP( path.join( distDir, content ) ),
+                globP( path.join( distDir, css ) )
             ] ).then( ( [content, css] ) => {
-                const purgecss = new Purgecss( {content, css} );
+                const purgecss = new Purgecss( {
+                    content,
+                    css,
+                    whitelist,
+                    whitelistPatterns,
+                    extractors: [
+                        {
+                            extractor: class PurgeFromJs {
+                                static extract ( content ) {
+                                    return content.match( /[A-Za-z0-9_-]+/g ) || []
+                                }
+                            },
+                            extensions: ['js']
+                        },
+                        {
+                            extractor: purgeHtml,
+                            extensions: ['html']
+                        }
+                    ]
+                } );
 
                 purgecss.purge().forEach( item => {
                     console.log( `Write:`, chalk.green( `-> ${item.file}` ) );

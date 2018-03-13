@@ -2,6 +2,18 @@ module.exports = {
     settings: {
         'view engine': 'ejs'
     },
+    purgecss: {
+        content: '**/*.html',
+        css: '**/*.css',
+        whitelist: [],
+        whitelistPatterns: [
+            // todo -> look into these defaults to see if necessary
+            /:hover/,
+            /:active/,
+            /:visited/,
+            /:link/
+        ]
+    },
     paths: {
         srcDir: 'src',
         distDir: 'public',
