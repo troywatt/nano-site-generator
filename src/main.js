@@ -94,14 +94,16 @@ module.exports = ( userConfig = {} ) => {
 
         .then( () => {
             const {content, css, whitelist, whitelistPatterns} = purgecssConfig;
+            const contentPaths = path.join( distDir, content );
+            const cssPaths = path.join( distDir, css );
+
             console.log( chalk.blue( 'Running purgecss...' ) );
-            console.log( 'Content path:', chalk.blue( path.join( distDir, '**/*.{html,js}' ) ) );
-            console.log( 'CSS path: ', chalk.blue( path.join( distDir, 'css/*.css' ) ) );
-            console.log( 'purgecssConfig: ', chalk.blue( JSON.stringify( purgecssConfig ) ) );
+            console.log( 'Content path:', chalk.blue( contentPaths ) );
+            console.log( 'CSS path:', chalk.blue( cssPaths ) );
 
             return Promise.all( [
-                globP( path.join( distDir, content ) ),
-                globP( path.join( distDir, css ) )
+                globP( contentPaths ),
+                globP( cssPaths )
             ] ).then( ( [content, css] ) => {
                 const purgecss = new Purgecss( {
                     content,

@@ -3,7 +3,7 @@ module.exports = {
         'view engine': 'ejs'
     },
     purgecss: {
-        content: '**/*.html',
+        content: '**/*.{html,js}',
         css: '**/*.css',
         whitelist: [],
         whitelistPatterns: [
