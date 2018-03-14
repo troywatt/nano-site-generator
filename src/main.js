@@ -57,25 +57,17 @@ module.exports = ( userConfig = {} ) => {
                 const fileData = path.parse( file );
                 const destPath = path.join( distDir, fileData.dir );
                 const filePath = path.join( destPath, `${fileData.name}.html` );
-                const fileName = `${fileData.dir.replace( '/', '-' )}-${fileData.name}.html`;
 
-                // create destination directory
-
+                // reset ejs blocks on each pass to prevent duplicate rendered blocks across template files
                 resetBlocks( options );
 
+                // create destination directory
                 compileP.push(
                     renderFileP( path.join( viewsDir, file ), options )
                         .then( content => {
                             // save the html file
-                            // todo -> write to temp dir until entire process succeeds to prevent destructive errors
-                            console.log( `Write:`, chalk.green( `-> ${path.join( distDir, fileName )}` ) );
-
-                            fse.writeFile( path.join( distDir, fileName ),
-                                content
-                                    .replace( /src="\/js/gi, 'src="js' )
-                                    .replace( /\/css/gi, 'css' )
-                                    .replace( /'\/ecommerce/gi, '\'ecommerce' )
-                            );
+                            console.log( `Write:`, chalk.green( `-> ${filePath}` ) );
+                            return fse.mkdirs( destPath ).then( () => fse.writeFile( filePath, content ) );
                         } )
                         .catch( err => {
                             console.log( `!Failed to write file`, chalk.red( `-> ${filePath}` ) );
