@@ -9,8 +9,11 @@ const merge = require( 'deepmerge' );
 const pathExists = require( 'path-exists' );
 const Purgecss = require( 'purgecss' );
 const purgeHtml = require( 'purge-from-html' );
+const penthouse = require( 'penthouse' );
 
 const config = require( '../nanosite.config' );
+
+console.log( chalk.red( 'YO !!LOADED LOCAL INSTANCE' ) );
 
 function resetBlocks ( options ) {
     // reset each view block so values are not compounded across renders
@@ -25,7 +28,8 @@ module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
     const {
         paths: {distDir, viewsDir, assetsDir, assetsDistDir, excludeDirs, excludeInFilename},
-        purgecss: purgecssConfig
+        purgecss: purgecssConfig,
+        criticalCSS
     } = options;
 
     console.log( chalk.blue( 'Building static site...' ) );
@@ -33,6 +37,7 @@ module.exports = ( userConfig = {} ) => {
 
     // clear destination folder
     console.log( chalk.green( '-> Cleaning destination folder' ) );
+
     fse.emptyDirSync( distDir );
 
     // copy assets folder
@@ -50,6 +55,8 @@ module.exports = ( userConfig = {} ) => {
     glob += '*.{ejs,html}';
 
     return globP( glob, {cwd: viewsDir} )
+
+    // render required view templates
         .then( files => {
             const compileP = [];
 
@@ -84,12 +91,13 @@ module.exports = ( userConfig = {} ) => {
             } );
         } )
 
-        .then( () => {
+        // purge unused CSS by extracting styles from rendered views
+        /*.then( () => {
             const {content, css, whitelist, whitelistPatterns} = purgecssConfig;
             const contentPaths = path.join( distDir, content );
             const cssPaths = path.join( distDir, css );
 
-            console.log( chalk.blue( 'Running purgecss...' ) );
+            console.log( chalk.blue( 'Purging unused CSS...' ) );
             console.log( 'Content path:', chalk.blue( contentPaths ) );
             console.log( 'CSS path:', chalk.blue( cssPaths ) );
 
@@ -125,6 +133,70 @@ module.exports = ( userConfig = {} ) => {
                 return this;
             } );
 
+        } )*/
+
+        // generate critical CSS
+        .then( () => {
+            const filemap = criticalCSS.filemap;
+            console.log( chalk.blue( 'Generating critical CSS ...' ) );
+            console.log( 'Filemap:', chalk.blue( JSON.stringify( filemap ) ) );
+
+            Object.entries( filemap ).map( ( [viewPath, cssFile] ) => {
+                // todo - clean logic
+                const cssGlob = (Array.isArray( cssFile ) && cssFile.length > 1)
+                    ? `{${cssFile.join( ',' )}}`
+                    : cssFile.toString();
+
+                // todo - clean logic
+                const viewEntry = path.join( distDir, viewPath ) + '.html';
+                const cssEntry = path.join( distDir, 'css', cssGlob ) + '.css';
+
+                console.log( 'Penthouse:', viewEntry, cssEntry );
+                const views = globP( viewEntry );
+                const cssList = globP( cssEntry );
+
+                Promise.all( [views, cssList] )
+                    .then( ( [views, cssList] ) => {
+                        let cssString = cssList.map( cssFile => fse.readFileSync( cssFile ) ).join( '' );
+
+                        // const ROOT = '/Users/troywatt/Sites/upi/UPI/Ultradent/UPI.Webstore.Frontend/UPI.Webstore.Frontend';
+                        const ROOT = 'http://localhost:3005';
+
+                        const penthouseResults = views.map( filePath => {
+                            // const url = `file://${path.join( ROOT, filePath )}`;
+                            const url = ROOT + filePath.replace( 'package/build', '' );
+                            console.log( 'Load html:', url );
+                            return penthouse( {
+                                url: url,
+                                cssString,
+                                ...criticalCSS.penthouse
+                            } ).catch( err => {
+                                console.log( chalk.red( `[Penthouse] ${err}` ) )
+                            } );
+                        } );
+
+                        Promise.all( penthouseResults ).then( results => {
+                            const concatCriticalCSS = results.reduce( ( acc, next ) => acc += next, '' );
+                            const criticalCSSFilePath = path.join( distDir,
+                                'css',
+                                `${cssFile}.critical.css` );
+                            console.log( `Write:`, chalk.green( `-> ${criticalCSSFilePath}` ) );
+                            fse.writeFileSync( criticalCSSFilePath, concatCriticalCSS );
+                        } );
+                    } )
+                    .catch( err => {
+                        console.log( chalk.red( '[CriticalCSS]', err ) );
+                    } );
+            } )
+
+            // penthouse( {
+            //     ...criticalCSS.penthouse,
+            //     url: 'http://localhost:3005/account/change-password',
+            //     css: './src/global.min.css'
+            //
+            // } ).then( criticalCSS => {
+            //     fs.writeFileSync( 'dist/critical.css', criticalCSS );
+            // } );
         } )
 
         .catch( err => console.error( chalk.red( `[NanogenError] ${err}` ) ) );

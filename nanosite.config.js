@@ -22,5 +22,22 @@ module.exports = {
         assetsDistDir: 'public/assets',
         excludeDirs: [],
         excludeInFilename: []
+    },
+    criticalCSS: {
+        filemap: {
+            // '/shell': 'global.min',
+            '/account/password-*': 'my-account'
+            // '/account/returns-*': ['returns', 'my-account']
+        },
+        penthouse: {
+            // strict: true,
+            keepLargerMediaQueries: true,
+            dimensions: [
+                {width: 320, height: 568},
+                {width: 752, height: 640},
+                {width: 1024, height: 640},
+                {width: 1280, height: 768}
+            ]
+        }
     }
 };
