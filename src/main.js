@@ -13,8 +13,6 @@ const penthouse = require( 'penthouse' );
 
 const config = require( '../nanosite.config' );
 
-console.log( chalk.red( 'YO !!LOADED LOCAL INSTANCE' ) );
-
 function resetBlocks ( options ) {
     // reset each view block so values are not compounded across renders
     if ( options.blocks ) {
@@ -92,7 +90,7 @@ module.exports = ( userConfig = {} ) => {
         } )
 
         // purge unused CSS by extracting styles from rendered views
-        /*.then( () => {
+        .then( () => {
             const {content, css, whitelist, whitelistPatterns} = purgecssConfig;
             const contentPaths = path.join( distDir, content );
             const cssPaths = path.join( distDir, css );
@@ -133,7 +131,7 @@ module.exports = ( userConfig = {} ) => {
                 return this;
             } );
 
-        } )*/
+        } )
 
         // generate critical CSS
         .then( () => {
@@ -160,12 +158,13 @@ module.exports = ( userConfig = {} ) => {
                         let cssString = cssList.map( cssFile => fse.readFileSync( cssFile ) ).join( '' );
 
                         // const ROOT = '/Users/troywatt/Sites/upi/UPI/Ultradent/UPI.Webstore.Frontend/UPI.Webstore.Frontend';
-                        const ROOT = 'http://localhost:3005';
+                        // const ROOT = 'http://localhost:3005';
+                        const ROOT = config.criticalCSS.siteOrigin;
 
                         const penthouseResults = views.map( filePath => {
                             // const url = `file://${path.join( ROOT, filePath )}`;
                             const url = ROOT + filePath.replace( 'package/build', '' );
-                            console.log( 'Load html:', url );
+                            console.log( chalk.blue( `[Penthouse] Load HTML - ${url}` ) );
                             return penthouse( {
                                 url: url,
                                 cssString,

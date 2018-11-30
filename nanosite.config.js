@@ -24,6 +24,7 @@ module.exports = {
         excludeInFilename: []
     },
     criticalCSS: {
+        siteOrigin: 'http://localhost:3005',
         filemap: {
             // '/shell': 'global.min',
             '/account/password-*': 'my-account'
