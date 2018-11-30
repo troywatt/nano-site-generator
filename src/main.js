@@ -159,6 +159,10 @@ module.exports = ( userConfig = {} ) => {
 
                         // const ROOT = '/Users/troywatt/Sites/upi/UPI/Ultradent/UPI.Webstore.Frontend/UPI.Webstore.Frontend';
                         // const ROOT = 'http://localhost:3005';
+
+                        if ( !config.criticalCSS.siteOrigin ) {
+                            throw Error( '[NanoSite Error] - criticalCSS.siteOrigin is not declared in nanosite.config' );
+                        }
                         const ROOT = config.criticalCSS.siteOrigin;
 
                         const penthouseResults = views.map( filePath => {
