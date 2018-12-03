@@ -13,6 +13,8 @@ const penthouse = require( 'penthouse' );
 
 const config = require( '../nanosite.config' );
 
+console.log( chalk.red( '!!![NanoSiteGeerator] Local!!!' ) );
+
 function resetBlocks ( options ) {
     // reset each view block so values are not compounded across renders
     if ( options.blocks ) {
@@ -52,41 +54,119 @@ module.exports = ( userConfig = {} ) => {
     glob += excludeInFilename.length ? `/!(${excludeInFilename.join( '|' )})` : '/';
     glob += '*.{ejs,html}';
 
-    return globP( glob, {cwd: viewsDir} )
+    return Promise.resolve()
 
-    // render required view templates
-        .then( files => {
-            const compileP = [];
+        // generate critical CSS
+        .then( () => {
+            const filemap = criticalCSS.filemap;
+            console.log( chalk.blue( 'Generating critical CSS ...' ) );
+            console.log( 'Filemap:', chalk.blue( JSON.stringify( filemap ) ) );
 
-            files.forEach( file => {
-                const fileData = path.parse( file );
-                const destPath = path.join( distDir, fileData.dir );
-                const filePath = path.join( destPath, `${fileData.name}.html` );
+            return new Promise( ( resolve, reject ) => {
+                Object.entries( filemap ).map( ( [viewPath, cssFile] ) => {
+                    // todo - clean logic
+                    const cssGlob = (Array.isArray( cssFile ) && cssFile.length > 1)
+                        ? `{${cssFile.join( ',' )}}`
+                        : cssFile.toString();
 
-                // reset ejs blocks on each pass to prevent duplicate rendered blocks across template files
-                resetBlocks( options );
+                    // todo - clean logic
+                    const viewEntry = path.join( viewsDir, viewPath ) + '.html';
+                    const cssEntry = path.join( distDir, 'css', cssGlob ) + '.css';
 
-                // create destination directory
-                compileP.push(
-                    renderFileP( path.join( viewsDir, file ), options )
-                        .then( content => {
-                            // save the html file
-                            console.log( `Write:`, chalk.green( `-> ${filePath}` ) );
-                            return fse.mkdirs( destPath ).then( () => fse.writeFile( filePath, content ) );
+                    console.log( '[Penthouse] viewPath: %s, cssPath: %s', viewEntry, cssEntry );
+                    const views = globP( viewEntry );
+                    const cssList = globP( cssEntry );
+
+                    return Promise.all( [views, cssList] )
+                        .then( ( [views, cssList] ) => {
+                            let cssString = cssList.map( cssFile => fse.readFileSync( cssFile ) ).join( '' );
+
+                            // const ROOT = '/Users/troywatt/Sites/upi/UPI/Ultradent/UPI.Webstore.Frontend/UPI.Webstore.Frontend';
+                            // const ROOT = 'http://localhost:3005';
+
+                            if ( !criticalCSS.siteOrigin ) {
+                                throw Error(
+                                    '[NanoSite Error] - criticalCSS.siteOrigin is not declared in nanosite.config' );
+                            }
+                            const ROOT = criticalCSS.siteOrigin;
+
+                            const penthouseResults = views.map( filePath => {
+                                // const url = `file://${path.join( ROOT, filePath )}`;
+                                const url = ROOT + filePath
+                                    .replace( viewsDir, '' )
+                                    .replace( '.html', '' );
+
+                                console.log( chalk.blue( `[Penthouse] Load HTML - ${url}` ) );
+                                return penthouse( {
+                                    url: url,
+                                    cssString,
+                                    renderWaitTime: 500,
+                                    ...criticalCSS.penthouse
+                                } ).catch( err => {
+                                    console.log( chalk.red( `[Penthouse] ${err}` ) )
+                                } );
+                            } );
+
+                            return Promise.all( penthouseResults ).then( results => {
+                                const concatCriticalCSS = results.reduce( ( acc, next ) => acc += next, '' );
+
+                                // critical CSS for distribution
+                                const distFilePath = path.join( distDir, 'css', `${cssFile}.critical.css` );
+                                console.log( `Write:`, chalk.green( `-> ${distFilePath}` ) );
+                                fse.writeFileSync( distFilePath, concatCriticalCSS );
+
+                                // put criticalCSS in assets directory for dev builds
+                                const publicFilePath = path.join( assetsDir, 'css', `${cssFile}.critical.css` );
+                                console.log( `Write:`, chalk.green( `-> ${publicFilePath}` ) );
+                                fse.writeFileSync( publicFilePath, concatCriticalCSS );
+
+                                resolve()
+                            } );
                         } )
                         .catch( err => {
-                            console.log( `!Failed to write file`, chalk.red( `-> ${filePath}` ) );
-                            console.error( chalk.red( err ) );
-                            console.error( chalk.bold.red( '\n\r*** Process terminate ***' ) );
-                            process.exit( 1 );
-                        } )
-                );
+                            console.log( chalk.red( '[CriticalCSS]', err ) );
+                            reject( err );
+                        } );
+                } )
             } );
+        } )
 
-            return Promise.all( compileP ).then( files => {
-                console.log( chalk.bold.blue( `Total Files: (${files.length})\n\r` ) );
-                return files;
-            } );
+        // render required view templates
+        .then( () => {
+            return globP( glob, {cwd: viewsDir} )
+                .then( files => {
+                    const compileP = [];
+
+                    files.forEach( file => {
+                        const fileData = path.parse( file );
+                        const destPath = path.join( distDir, fileData.dir );
+                        const filePath = path.join( destPath, `${fileData.name}.html` );
+
+                        // reset ejs blocks on each pass to prevent duplicate rendered blocks across template files
+                        resetBlocks( options );
+
+                        // create destination directory
+                        compileP.push(
+                            renderFileP( path.join( viewsDir, file ), options )
+                                .then( content => {
+                                    // save the html file
+                                    console.log( `Write:`, chalk.green( `-> ${filePath}` ) );
+                                    return fse.mkdirs( destPath ).then( () => fse.writeFile( filePath, content ) );
+                                } )
+                                .catch( err => {
+                                    console.log( `!Failed to write file`, chalk.red( `-> ${filePath}` ) );
+                                    console.error( chalk.red( err ) );
+                                    console.error( chalk.bold.red( '\n\r*** Process terminate ***' ) );
+                                    process.exit( 1 );
+                                } )
+                        );
+                    } );
+
+                    return Promise.all( compileP ).then( files => {
+                        console.log( chalk.bold.blue( `Total Files: (${files.length})\n\r` ) );
+                        return files;
+                    } );
+                } )
         } )
 
         // purge unused CSS by extracting styles from rendered views
@@ -131,75 +211,6 @@ module.exports = ( userConfig = {} ) => {
                 return this;
             } );
 
-        } )
-
-        // generate critical CSS
-        .then( () => {
-            const filemap = criticalCSS.filemap;
-            console.log( chalk.blue( 'Generating critical CSS ...' ) );
-            console.log( 'Filemap:', chalk.blue( JSON.stringify( filemap ) ) );
-
-            Object.entries( filemap ).map( ( [viewPath, cssFile] ) => {
-                // todo - clean logic
-                const cssGlob = (Array.isArray( cssFile ) && cssFile.length > 1)
-                    ? `{${cssFile.join( ',' )}}`
-                    : cssFile.toString();
-
-                // todo - clean logic
-                const viewEntry = path.join( distDir, viewPath ) + '.html';
-                const cssEntry = path.join( distDir, 'css', cssGlob ) + '.css';
-
-                console.log( 'Penthouse:', viewEntry, cssEntry );
-                const views = globP( viewEntry );
-                const cssList = globP( cssEntry );
-
-                Promise.all( [views, cssList] )
-                    .then( ( [views, cssList] ) => {
-                        let cssString = cssList.map( cssFile => fse.readFileSync( cssFile ) ).join( '' );
-
-                        // const ROOT = '/Users/troywatt/Sites/upi/UPI/Ultradent/UPI.Webstore.Frontend/UPI.Webstore.Frontend';
-                        // const ROOT = 'http://localhost:3005';
-
-                        if ( !config.criticalCSS.siteOrigin ) {
-                            throw Error( '[NanoSite Error] - criticalCSS.siteOrigin is not declared in nanosite.config' );
-                        }
-                        const ROOT = config.criticalCSS.siteOrigin;
-
-                        const penthouseResults = views.map( filePath => {
-                            // const url = `file://${path.join( ROOT, filePath )}`;
-                            const url = ROOT + filePath.replace( 'package/build', '' );
-                            console.log( chalk.blue( `[Penthouse] Load HTML - ${url}` ) );
-                            return penthouse( {
-                                url: url,
-                                cssString,
-                                ...criticalCSS.penthouse
-                            } ).catch( err => {
-                                console.log( chalk.red( `[Penthouse] ${err}` ) )
-                            } );
-                        } );
-
-                        Promise.all( penthouseResults ).then( results => {
-                            const concatCriticalCSS = results.reduce( ( acc, next ) => acc += next, '' );
-                            const criticalCSSFilePath = path.join( distDir,
-                                'css',
-                                `${cssFile}.critical.css` );
-                            console.log( `Write:`, chalk.green( `-> ${criticalCSSFilePath}` ) );
-                            fse.writeFileSync( criticalCSSFilePath, concatCriticalCSS );
-                        } );
-                    } )
-                    .catch( err => {
-                        console.log( chalk.red( '[CriticalCSS]', err ) );
-                    } );
-            } )
-
-            // penthouse( {
-            //     ...criticalCSS.penthouse,
-            //     url: 'http://localhost:3005/account/change-password',
-            //     css: './src/global.min.css'
-            //
-            // } ).then( criticalCSS => {
-            //     fs.writeFileSync( 'dist/critical.css', criticalCSS );
-            // } );
         } )
 
         .catch( err => console.error( chalk.red( `[NanogenError] ${err}` ) ) );
