@@ -13,8 +13,6 @@ const penthouse = require( 'penthouse' );
 
 const config = require( '../nanosite.config' );
 
-console.log( chalk.red( '!!![NanoSiteGeerator] Local!!!' ) );
-
 function resetBlocks ( options ) {
     // reset each view block so values are not compounded across renders
     if ( options.blocks ) {
