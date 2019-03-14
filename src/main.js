@@ -8,10 +8,13 @@ const renderFileP = promisify( ejs );
 const merge = require( 'deepmerge' );
 const pathExists = require( 'path-exists' );
 const Purgecss = require( 'purgecss' );
+const cssPurge = require( 'css-purge' );
 const purgeHtml = require( 'purge-from-html' );
 const penthouse = require( 'penthouse' );
 
 const config = require( '../nanosite.config' );
+
+cssPurge.purgeCSSP = promisify(cssPurge.purgeCSS);
 
 function resetBlocks ( options ) {
     // reset each view block so values are not compounded across renders
@@ -22,6 +25,9 @@ function resetBlocks ( options ) {
     }
 }
 
+
+
+
 module.exports = ( userConfig = {} ) => {
     const options = merge( config, userConfig );
     const {
@@ -30,6 +36,7 @@ module.exports = ( userConfig = {} ) => {
         criticalCSS
     } = options;
 
+    console.log( chalk.red( '!!! __DEV MODE__ !!!' ) );
     console.log( chalk.blue( 'Building static site...' ) );
     console.log( 'Current dir:', chalk.blue( viewsDir ) );
 
@@ -108,17 +115,24 @@ module.exports = ( userConfig = {} ) => {
                             return Promise.all( penthouseResults ).then( results => {
                                 const concatCriticalCSS = results.reduce( ( acc, next ) => acc += next, '' );
 
-                                // critical CSS for distribution
-                                const distFilePath = path.join( distDir, 'css', `${cssFile}.critical.css` );
-                                console.log( `Write:`, chalk.green( `-> ${distFilePath}` ) );
-                                fse.writeFileSync( distFilePath, concatCriticalCSS );
+                                console.log( chalk.blue( `purging criticalCSS "${cssFile}"...`) );
+                                return cssPurge.purgeCSSP( concatCriticalCSS, { trim: true, shorten: true })
+                                    .then(result => {
+                                        // critical CSS for distribution
+                                        const distFilePath = path.join( distDir, 'css', `${cssFile}.critical.css` );
+                                        console.log( `Write:`, chalk.green( `-> ${distFilePath}` ) );
+                                        fse.writeFileSync( distFilePath, result );
 
-                                // put criticalCSS in assets directory for dev builds
-                                const publicFilePath = path.join( assetsDir, 'css', `${cssFile}.critical.css` );
-                                console.log( `Write:`, chalk.green( `-> ${publicFilePath}` ) );
-                                fse.writeFileSync( publicFilePath, concatCriticalCSS );
+                                        // put criticalCSS in assets directory for dev builds
+                                        const publicFilePath = path.join( assetsDir, 'css', `${cssFile}.critical.css` );
+                                        console.log( `Write:`, chalk.green( `-> ${publicFilePath}` ) );
+                                        fse.writeFileSync( publicFilePath, result );
 
-                                resolve()
+                                        resolve();
+                                    }).catch( err => {
+                                        console.log( chalk.red( '[CSSPurge>CriticalCSS]', err ) );
+                                        reject( err );
+                                    });
                             } );
                         } )
                         .catch( err => {
