@@ -33,12 +33,6 @@ module.exports = {
             // strict: true,
             keepLargerMediaQueries: true,
             renderWaitTime: 500,
-            dimensions: [
-                {width: 320, height: 568},
-                {width: 752, height: 640},
-                {width: 1024, height: 640},
-                {width: 1280, height: 768}
-            ]
         }
     }
 };
