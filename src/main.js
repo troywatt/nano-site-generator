@@ -70,7 +70,7 @@ module.exports = ( userConfig = {} ) => {
             return new Promise( ( resolve, reject ) => {
                 Object.entries( filemap ).map( ( [viewPath, cssData] ) => {
                     const cssFile = cssData.src;
-                    const cssFileName = cssData.fileName || cssFile;
+                    const cssFileName = cssData.outputFileName || cssFile;
                     // todo - clean logic
                     const cssGlob = (Array.isArray( cssFile ) && cssFile.length > 1)
                         ? `{${cssFile.join( ',' )}}`
@@ -121,12 +121,12 @@ module.exports = ( userConfig = {} ) => {
                                 return cssPurge.purgeCSSP( concatCriticalCSS, { trim: true, shorten: true })
                                     .then(result => {
                                         // critical CSS for distribution
-                                        const distFilePath = path.join( distDir, 'css', `${cssFileName}.critical.css` );
+                                        const distFilePath = path.join( distDir, 'css', `critical.${cssFileName}.css` );
                                         console.log( `Write:`, chalk.green( `-> ${distFilePath}` ) );
                                         fse.writeFileSync( distFilePath, result );
 
                                         // put criticalCSS in assets directory for dev builds
-                                        const publicFilePath = path.join( assetsDir, 'css', `${cssFileName}.critical.css` );
+                                        const publicFilePath = path.join( assetsDir, 'css', `critical.${cssFileName}.css` );
                                         console.log( `Write:`, chalk.green( `-> ${publicFilePath}` ) );
                                         fse.writeFileSync( publicFilePath, result );
 
