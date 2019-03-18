@@ -33,7 +33,6 @@ module.exports = ( userConfig = {} ) => {
         criticalCSS
     } = options;
 
-    console.log( chalk.red( '!!! __DEV MODE__ !!!' ) );
     console.log( chalk.blue( 'Building static site...' ) );
     console.log( 'Current dir:', chalk.blue( viewsDir ) );
 
@@ -122,16 +121,20 @@ module.exports = ( userConfig = {} ) => {
                                         }
 
                                         // critical CSS for distribution
-                                        const distFilePath =
-                                            path.join( distDir, 'css', 'critical', `${cssFileName}.css` );
-                                        console.log( `Write:`, chalk.green( `-> ${distFilePath}` ) );
-                                        fse.writeFileSync( distFilePath, result );
+                                        const distCriticalDir = path.join( distDir, 'css', 'critical' );
+                                        const distFilePath = path.join( distCriticalDir, `${cssFileName}.css` );
+                                        fse.ensureDir( distCriticalDir ).then( () => {
+                                            fse.writeFileSync( distFilePath, result );
+                                            console.log( `Write:`, chalk.green( `-> ${distFilePath}` ) );
+                                        } );
 
                                         // put criticalCSS in assets directory for dev builds
-                                        const publicFilePath =
-                                            path.join( assetsDir, 'css', 'critical', `${cssFileName}.css` );
-                                        console.log( `Write:`, chalk.green( `-> ${publicFilePath}` ) );
-                                        fse.writeFileSync( publicFilePath, result );
+                                        const publicCriticalDir = path.join( assetsDir, 'css', 'critical' );
+                                        const publicFilePath = path.join( publicCriticalDir, `${cssFileName}.css` );
+                                        fse.ensureDir( publicCriticalDir ).then( () => {
+                                            fse.writeFileSync( publicCriticalDir + '/' + `${cssFileName}.css`, result );
+                                            console.log( `Write:`, chalk.green( `-> ${publicFilePath}` ) );
+                                        } );
 
                                         resolve();
                                     } ).catch( err => {
