@@ -67,6 +67,11 @@ module.exports = ( userConfig = {} ) => {
                 Object.entries( filemap ).map( ( [viewPath, cssData] ) => {
                     const cssFile = cssData.src;
                     const cssFileName = cssData.outputFileName || cssFile;
+
+                    if(!cssFile) {
+                        throw Error(`Could not generate file for view path ${viewPath}, CssFile.src configuration missing`);
+                    }
+
                     // todo - clean logic
                     const cssGlob = (Array.isArray( cssFile ) && cssFile.length > 1)
                         ? `{${cssFile.join( ',' )}}`
