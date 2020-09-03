@@ -29,7 +29,7 @@
     "path": "^0.12.7",
     "path-exists": "^3.0.0",
     "penthouse": "^1.11.0",
-    "puppeteer": "^1.10.0",
+    "puppeteer": "^1.13.0",
     "purge-from-html": "^1.0.3",
     "purgecss": "^0.20.1",
     "util": "^0.10.4"
